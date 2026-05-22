@@ -1,5 +1,5 @@
-"""
-Skin Lesion Classifier - Railway + Hugging Face Version
+[21:46, 5/22/2026] Omar: """
+Skin Lesion Classifier - Railway + Hugging Face (Final Clean Version)
 """
 
 import gradio as gr
@@ -12,10 +12,14 @@ import os
 import traceback
 from huggingface_hub import hf_hub_download
 
+# -----------------------------
 # Device
+# -----------------------------
 device = torch.device("cpu")
 
-# Preprocessing
+# -----------------------------
+# Image preprocessing
+# -----------------------------
 preprocess = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -25,12 +29,16 @@ preprocess = transforms.Compose([
     ),
 ])
 
+# -----------------------------
 # Global model
+# -----------------------------
 model = None
 
 
+# -----------------------------
+# Load model from Hugging Face
+# -----------------------------
 def load_model():
-    """Load model once from Hugging Face"""
     global model
 
     if model is not None:
@@ -47,13 +55,12 @@ def load_model():
             token=os.environ.get("HF_TOKEN")  # required if private repo
         )
 
-        print("📦 Model downloaded to:", model_path)
+        print(f"📦 Model downloaded: {model_path}")
 
-        # Create model architecture (must match training)
+        # Model architecture (must match training)
         m = models.resnet18(weights=None)
         m.fc = nn.Linear(512, 2)
 
-        # Load weights
         state_dict = torch.load(model_path, map_location=device)
         m.load_state_dict(state_dict)
 
@@ -66,25 +73,25 @@ def load_model():
         return model
 
     except Exception:
-        print("❌ MODEL LOADING FAILED:")
+        print("❌ MODEL LOADING ERROR:")
         print(traceback.format_exc())
         return None
 
 
+# -----------------------------
+# Prediction function
+# -----------------------------
 def predict(image):
-    """Predict lesion type"""
-
     if image is None:
         return "❌ Please upload an image"
 
     m = load_model()
 
     if m is None:
-        return "❌ Model failed to load. Check logs (HF repo / token / filename)."
+        return "❌ Model failed to load. Check Hugging Face repo, token, or filename."
 
     try:
         img = image.convert("RGB")
-
         x = preprocess(img).unsqueeze(0).to(device)
 
         with torch.no_grad():
@@ -101,16 +108,20 @@ def predict(image):
         return "❌ Prediction error:\n" + traceback.format_exc()
 
 
-# Load model at startup (important for Railway stability)
+# -----------------------------
+# Load model at startup (important for Railway)
+# -----------------------------
 model = load_model()
 
-# Gradio UI
-with gr.Blocks(title="Skin Lesion Classifier", theme=gr.themes.Soft()) as demo:
+# -----------------------------
+# UI (Gradio)
+# -----------------------------
+with gr.Blocks(title="Skin Lesion Classifier") as demo:
 
     gr.Markdown("""
     # 🔬 Skin Lesion Classifier
 
-    Upload a dermoscopy image and the AI will classify it as:
+    Upload a dermoscopy image and the AI will classify it:
 
     - 🟢 Benign  
     - 🔴 Melanoma  
@@ -135,6 +146,9 @@ with gr.Blocks(title="Skin Lesion Classifier", theme=gr.themes.Soft()) as demo:
     """)
 
 
+# -----------------------------
+# Run app (FIXED _name_)
+# -----------------------------
 if _name_ == "_main_":
     demo.launch(
         server_name="0.0.0.0",
