@@ -41,7 +41,7 @@ def load_model():
         
         # Download model from Hugging Face
         model_path = hf_hub_download(
-            repo_id="77omaryalova/skin-lesion-classifier",
+            repo_id="77omaryalova",
             filename="model.pth"
         )
         
