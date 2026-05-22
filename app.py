@@ -1,6 +1,6 @@
 """
-Skin Lesion Classifier - Railway.app Version
-=============================================
+Skin Lesion Classifier - Railway.app Version with Hugging Face Model
+=====================================================================
 Dermoscopy Skin Lesion Classification
 Group: AHMED AYASH, OMAR ADEL MOHAMMED, AYAH RAJOUB, GHADA FRIGUI
 Institution: İstinye Üniversitesi
@@ -13,6 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models, transforms
 from PIL import Image
+import os
+from huggingface_hub import hf_hub_download
 
 # Device
 device = torch.device("cpu")
@@ -28,30 +30,39 @@ preprocess = transforms.Compose([
 model = None
 
 def load_model():
-    """Load your trained model."""
+    """Load your trained model from Hugging Face."""
     global model
     
     if model is not None:
         return model
     
     try:
-        print("Loading model...")
+        print("Loading model from Hugging Face...")
+        
+        # Download model from Hugging Face
+        model_path = hf_hub_download(
+            repo_id="77omaryalova/skin-lesion-classifier",
+            filename="model.pth"
+        )
+        
+        print(f"Model downloaded to: {model_path}")
+        
+        # Load the model
         m = models.resnet18(pretrained=False)
         m.fc = nn.Linear(512, 2)
         
-        # Load your model.pth
-        m.load_state_dict(torch.load("model.pth", map_location=device))
+        m.load_state_dict(torch.load(model_path, map_location=device))
         m.to(device)
         m.eval()
         
         model = m
-        print("✅ Model loaded!")
+        print("✅ Model loaded successfully!")
         return model
     except FileNotFoundError:
-        print("❌ model.pth not found!")
+        print("❌ model.pth not found on Hugging Face!")
         return None
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Error loading model: {e}")
         return None
 
 def predict(image):
@@ -64,7 +75,7 @@ def predict(image):
     m = load_model()
     
     if m is None:
-        return "❌ Model not loaded. Make sure model.pth is in the same folder as app.py"
+        return "❌ Model not loaded. Check Hugging Face repo or internet connection."
     
     try:
         # Ensure RGB
